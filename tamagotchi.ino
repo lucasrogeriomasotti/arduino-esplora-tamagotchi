@@ -1,26 +1,37 @@
 #include <Esplora.h>
 #include <TFT.h>
 
+struct RGB {
+  byte r;
+  byte g;
+  byte b;
+};
+
+struct Position {
+  int x;
+  int y;
+};
+
 int screenWidth;
 int screenHeight;
 
-const int environmentTemperaturePosX = 20;
-const int environmentTemperaturePosY = 5;
+const Position ENVIRONMENT_TEMP_POS = {20, 5};
 int environmentTemperature;
 
-const int houseTemperaturePosX = 65;
-const int houseTemperaturePosY = 5;
+const Position AR_CONDITIONER_TEMP_POS = {65, 5};
 int houseTemperature;
+
+const RGB BACKGROUND_COLOR = { 0, 0, 0 };
 
 void setup() {
   EsploraTFT.begin();
-  EsploraTFT.background(0, 0, 0);
+  EsploraTFT.background(BACKGROUND_COLOR.r, BACKGROUND_COLOR.g, BACKGROUND_COLOR.b);
   screenWidth = EsploraTFT.width();
   screenHeight = EsploraTFT.height();
 
   EsploraTFT.stroke(255, 255, 255);
-  EsploraTFT.text("ENV", (environmentTemperaturePosX - 20), environmentTemperaturePosY);
-  EsploraTFT.text("HOU", (houseTemperaturePosX - 20), houseTemperaturePosY);
+  EsploraTFT.text("ENV", (ENVIRONMENT_TEMP_POS.x - 20), ENVIRONMENT_TEMP_POS.y);
+  EsploraTFT.text("HOU", (AR_CONDITIONER_TEMP_POS.x - 20), AR_CONDITIONER_TEMP_POS.y);
 }
 
 void loop() {  
@@ -32,31 +43,28 @@ void loop() {
   EsploraTFT.stroke(255, 255, 255);
   EsploraTFT.rect(screenWidth/2, screenHeight/2, 80, 80);
   */
+
+  RGB white = { 255, 255, 255 };
   
   environmentTemperature = Esplora.readTemperature(DEGREES_C);
-  printTemperature(environmentTemperature, environmentTemperaturePosX, environmentTemperaturePosY);
+  printTemperature(environmentTemperature, ENVIRONMENT_TEMP_POS, white);
 
   houseTemperature =  map(Esplora.readSlider(), 1023, 0, 10, 35);
-  printTemperature(houseTemperature, houseTemperaturePosX, houseTemperaturePosY);
+  printTemperature(houseTemperature, AR_CONDITIONER_TEMP_POS, white);
     
   delay(1000);
-  clearTemperature(environmentTemperature, environmentTemperaturePosX, environmentTemperaturePosY);
-  clearTemperature(houseTemperature, houseTemperaturePosX, houseTemperaturePosY);
+  clearTemperature(environmentTemperature, ENVIRONMENT_TEMP_POS);
+  clearTemperature(houseTemperature, AR_CONDITIONER_TEMP_POS);
 }
 
-void printTemperature(int temperature, int temperaturePosX, int temperaturePosY) {
+void printTemperature(int temperature, Position pos, RGB color) {
   String temperatureText = String(temperature) + "C";
   char printout[5];
   temperatureText.toCharArray(printout, 5);
-  EsploraTFT.stroke(255, 255, 255);
-  EsploraTFT.text(printout, temperaturePosX, temperaturePosY);
+  EsploraTFT.stroke(color.r, color.g, color.b);
+  EsploraTFT.text(printout, pos.x, pos.y);
 }
 
-void clearTemperature(int temperature, int temperaturePosX, int temperaturePosY) {
-  String temperatureText = String(temperature) + "C";
-  char printout[5];
-  temperatureText.toCharArray(printout, 5);
-  EsploraTFT.stroke(0, 0, 0);
-  EsploraTFT.text(printout, temperaturePosX, temperaturePosY);
+void clearTemperature(int temperature, Position pos) {
+  printTemperature(temperature, pos, BACKGROUND_COLOR);
 }
-
