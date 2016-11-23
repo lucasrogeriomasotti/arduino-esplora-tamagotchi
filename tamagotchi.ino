@@ -27,6 +27,9 @@ const Position LUMINOSITY_POS = {110, 5};
 
 const RGB BACKGROUND_COLOR = { 0, 0, 0 };
 
+const Position STATUS_BASE_POS = {100, 30};
+const int STATUS_LINE_HEIGHT = 15;
+
 void setup() {
   EsploraTFT.begin();
   EsploraTFT.background(BACKGROUND_COLOR.r, BACKGROUND_COLOR.g, BACKGROUND_COLOR.b);
@@ -37,11 +40,17 @@ void setup() {
   EsploraTFT.text("ENV ", (ENVIRONMENT_TEMP_POS.x - 20), ENVIRONMENT_TEMP_POS.y);
   EsploraTFT.text("ARC ", (AR_CONDITIONER_TEMP_POS.x - 20), AR_CONDITIONER_TEMP_POS.y);
   EsploraTFT.text("LUM ", (LUMINOSITY_POS.x - 20), LUMINOSITY_POS.y);
+  EsploraTFT.text("HP", STATUS_BASE_POS.x, STATUS_BASE_POS.y);
+  EsploraTFT.text("HUN", STATUS_BASE_POS.x, STATUS_BASE_POS.y + STATUS_LINE_HEIGHT);
+  EsploraTFT.text("SLE", STATUS_BASE_POS.x, STATUS_BASE_POS.y + (STATUS_LINE_HEIGHT * 2) );
+  EsploraTFT.text("STA", STATUS_BASE_POS.x, STATUS_BASE_POS.y + (STATUS_LINE_HEIGHT * 3) );
+  
+  EsploraTFT.line(0, 0, 0, 100);
 } 
 
 void loop() {  
   EsploraTFT.fill(255,255,255);
-  EsploraTFT.circle(screenWidth/2, screenHeight/2, 15);
+  EsploraTFT.circle(screenWidth/2 - 30, screenHeight/2, 10);
 
   /*
   EsploraTFT.noFill();
