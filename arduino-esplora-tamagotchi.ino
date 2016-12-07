@@ -94,8 +94,13 @@ void loop() {
   int luminosity = map(Esplora.readLightSensor(), 1023, 0, 100, 0);
   printValue(luminosity, LUMINOSITY_POS, white, "%");
 
-  int noise = map(collectNoise(), 1023, 0, NOISE_MAX, NOISE_MIN);
-  printValue(noise, NOISE_POS, white, "%");
+  int noise = collectNoise();
+  int noiseMapped = map(noise, 1023, 0, NOISE_MAX, NOISE_MIN);
+  printValue(noiseMapped, NOISE_POS, white, "%");
+
+  if(noise > 0) {
+    Esplora.tone(440, 10);
+  }
 
   if(isDark(luminosity) && noise == 0) {
     printSleepStatus(white);
@@ -130,11 +135,11 @@ void loop() {
       status = feed(status);
   }
   
-  delay(400);
+  delay(100);
   clearValue(environmentTemperature, ENVIRONMENT_TEMP_POS, "C");
   clearValue(houseTemperature, AR_CONDITIONER_TEMP_POS, "C");
   clearValue(luminosity, LUMINOSITY_POS, "%");
-  clearValue(noise, NOISE_POS, "%");
+  clearValue(noiseMapped, NOISE_POS, "%");
   cycles++;
 }
 
