@@ -49,18 +49,22 @@ const int LUMINOSITY_DARK = 10;
 const int MAX_HP = 100;
 const int MAX_HUNGER = 100;
 const int MAX_SLEEP = 100;
-const int DEFAULT_SIZE = 10;
+const int DEFAULT_SIZE = 4;
 Status status = { MAX_HP, MAX_HUNGER, MAX_SLEEP, DEFAULT_SIZE };
 
 const int SLEEP_CYCLE = 5 * 10;
 const int HUNGER_CYCLE = 10 * 10;
 unsigned long cycles = 0;
 
-const int FOOD_HUNGER_BONUS = 10;
+const int FOOD_HUNGER_BONUS = 2;
 int circleSize = 10;
 
 const int NOISE_MAX = 100;
 const int NOISE_MIN = 0;
+
+const RGB white = { 255, 255, 255 };
+
+Position circlePosition;
 
 void setup() {
   EsploraTFT.begin();
@@ -79,13 +83,38 @@ void setup() {
   EsploraTFT.text("STA", STATUS_BASE_POS.x, STATUS_BASE_POS.y + (STATUS_LINE_HEIGHT * 3) );
 
   EsploraTFT.rect(0,30, 115, (screenHeight - 35));
+
+  circlePosition.x = screenWidth/2 - 30;
+  circlePosition.y =  screenHeight/2;
+
+  Serial.begin(9600);
 } 
 
 void loop() {  
-  EsploraTFT.fill(255,255,255);
-  EsploraTFT.circle(screenWidth/2 - 30, screenHeight/2, status.circleSize);
+  int x_axis = Esplora.readAccelerometer(X_AXIS);
+  int y_axis = Esplora.readAccelerometer(Y_AXIS);
 
-  RGB white = { 255, 255, 255 };
+   Serial.print("x: ");
+ Serial.print(x_axis);
+ Serial.print("\ty: ");
+ Serial.print(y_axis);
+ Serial.println();
+  
+  if(x_axis > 40) { //CIRCLE SHOULD MOVE TO THE LEFT OF THE SCREEN
+    eraseCircle();
+    circlePosition.x = circlePosition.x - map(x_axis, 40, 140, 0, 15);
+  } else if(x_axis < 0) { //CIRCLE SHOULD MOVE TO THE RIGHT OF THE SCREEN
+    eraseCircle();
+    circlePosition.x = circlePosition.x + map(x_axis, 0, -100, 0, 15);
+  } else if(y_axis > 40) {
+    eraseCircle();
+    circlePosition.y = circlePosition.y + map(y_axis, 40, 140, 0, 15);
+  } else if(y_axis < 0) {
+    eraseCircle();
+    circlePosition.y = circlePosition.y - map(y_axis, 0, -100, 0, 15);
+  }
+
+  printCircle(white);
   
   environmentTemperature = Esplora.readTemperature(DEGREES_C);
   printValue(environmentTemperature, ENVIRONMENT_TEMP_POS, white, "C");
@@ -137,7 +166,7 @@ void loop() {
       status = feed(status);
   }
   
-  delay(100);
+  delay(50);
   clearValue(environmentTemperature, ENVIRONMENT_TEMP_POS, "C");
   clearValue(houseTemperature, AR_CONDITIONER_TEMP_POS, "C");
   clearValue(luminosity, LUMINOSITY_POS, "%");
@@ -250,10 +279,10 @@ Status heal(Status s) {
 
 void printFoodMessage() {
   EsploraTFT.stroke(255, 255, 255);
-  EsploraTFT.text("FOOD!", screenWidth/2 - 40, screenHeight/2 - 20);
+  EsploraTFT.text("FOOD!", circlePosition.x - 10, circlePosition.y - 20);
   delay(200);
   EsploraTFT.stroke(BACKGROUND_COLOR.r, BACKGROUND_COLOR.g, BACKGROUND_COLOR.b);
-  EsploraTFT.text("FOOD!", screenWidth/2 - 40, screenHeight/2 - 20);
+  EsploraTFT.text("FOOD!", circlePosition.x - 10, circlePosition.y - 20);
 }
 
 int collectNoise() {
@@ -280,5 +309,13 @@ int collectNoise() {
    }
    peakToPeak = signalMax - signalMin;  // max - min = peak-peak amplitude
    return peakToPeak;
+}
+
+void eraseCircle() {
+  printCircle(BACKGROUND_COLOR);
+}
+void printCircle(RGB color) {
+  EsploraTFT.fill(color.r, color.g, color.b);
+  EsploraTFT.circle(circlePosition.x, circlePosition.y, status.circleSize);
 }
 
