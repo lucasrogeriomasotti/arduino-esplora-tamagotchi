@@ -64,6 +64,11 @@ const int NOISE_MIN = 0;
 
 const RGB white = { 255, 255, 255 };
 
+const int X_RIGHT_LIMIT=10;
+const int X_LEFT_LIMIT=110;
+const int Y_UPPER_LIMIT=35;
+const int Y_LOWER_LIMIT=116;
+
 Position circlePosition;
 
 void setup() {
@@ -92,16 +97,16 @@ void loop() {
   int x_axis = Esplora.readAccelerometer(X_AXIS);
   int y_axis = Esplora.readAccelerometer(Y_AXIS);
 
-  if (x_axis > 40) { //CIRCLE SHOULD MOVE TO THE LEFT OF THE SCREEN
+  if (x_axis > 40 && circlePosition.x > (X_RIGHT_LIMIT + status.circleSize)) { //CIRCLE SHOULD MOVE TO THE LEFT OF THE SCREEN
     eraseCircle();
     circlePosition.x = circlePosition.x - map(x_axis, 40, 140, 0, 15);
-  } else if (x_axis < 0) { //CIRCLE SHOULD MOVE TO THE RIGHT OF THE SCREEN
+  } else if (x_axis < 0 && circlePosition.x < (X_LEFT_LIMIT - status.circleSize)) { //CIRCLE SHOULD MOVE TO THE RIGHT OF THE SCREEN
     eraseCircle();
     circlePosition.x = circlePosition.x + map(x_axis, 0, -100, 0, 15);
-  } else if (y_axis > 40) {
+  } else if (y_axis > 40 && circlePosition.y < (Y_LOWER_LIMIT - status.circleSize) ) {
     eraseCircle();
     circlePosition.y = circlePosition.y + map(y_axis, 40, 140, 0, 15);
-  } else if (y_axis < 0) {
+  } else if (y_axis < 0 && circlePosition.y > (Y_UPPER_LIMIT + status.circleSize)) {
     eraseCircle();
     circlePosition.y = circlePosition.y - map(y_axis, 0, -100, 0, 15);
   }
