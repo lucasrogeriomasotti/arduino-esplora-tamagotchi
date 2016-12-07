@@ -22,6 +22,7 @@ struct Status {
   int hp;
   int hunger;
   int sleep;
+  int circleSize;
 };
 
 int screenWidth;
@@ -47,13 +48,15 @@ const int LUMINOSITY_DARK = 10;
 const int MAX_HP = 100;
 const int MAX_HUNGER = 100;
 const int MAX_SLEEP = 100;
-Status status = { MAX_HP, MAX_HUNGER, MAX_SLEEP};
+const int DEFAULT_SIZE = 10;
+Status status = { MAX_HP, MAX_HUNGER, MAX_SLEEP, DEFAULT_SIZE };
 
 const int SLEEP_CYCLE = 5;
 const int HUNGER_CYCLE = 10;
 unsigned long cycles = 0;
 
 const int FOOD_HUNGER_BONUS = 10;
+int circleSize = 10;
 
 void setup() {
   EsploraTFT.begin();
@@ -73,7 +76,7 @@ void setup() {
 
 void loop() {  
   EsploraTFT.fill(255,255,255);
-  EsploraTFT.circle(screenWidth/2 - 30, screenHeight/2, 10);
+  EsploraTFT.circle(screenWidth/2 - 30, screenHeight/2, status.circleSize);
 
   RGB white = { 255, 255, 255 };
   
@@ -113,8 +116,8 @@ void loop() {
     status = heal(status);
   }
 
-  int button = Esplora.readButton(SWITCH_RIGHT);
-  if(button == LOW) {
+  int feedButton = Esplora.readButton(SWITCH_RIGHT);
+  if(feedButton == LOW) {
       status = feed(status);
   }
   
@@ -228,6 +231,7 @@ Status feed(Status s) {
     newHunger = 100;
   }
   status.hunger = newHunger;
+  status.circleSize += 10;
   printFoodMessage();
   return status;
 }
