@@ -155,7 +155,7 @@ boolean isDark(int luminosity) {
 
 void printSleepStatus(RGB color) {
   EsploraTFT.stroke(color.r, color.g, color.b);
-  EsploraTFT.text("SLE", STATUS_BASE_POS.x + 20, STATUS_BASE_POS.y + (STATUS_LINE_HEIGHT * 3) );
+  EsploraTFT.text("SLE", STATUS_BASE_POS.x + 10, STATUS_BASE_POS.y + (STATUS_LINE_HEIGHT * 5) );
 }
 void clearSleepStatus() {
   printSleepStatus(BACKGROUND_COLOR);
@@ -192,6 +192,7 @@ void printTemperaturePerception(TemperaturePerception temperature) {
   }
   temperatureText.toCharArray(printout, 4);
   EsploraTFT.fill(BACKGROUND_COLOR.r, BACKGROUND_COLOR.g, BACKGROUND_COLOR.b);
+  EsploraTFT.stroke(BACKGROUND_COLOR.r, BACKGROUND_COLOR.g, BACKGROUND_COLOR.b);
   EsploraTFT.rect(STATUS_BASE_POS.x + 10, STATUS_BASE_POS.y + (STATUS_LINE_HEIGHT * 4), 20, 10);
   EsploraTFT.stroke(255, 255, 255);
   EsploraTFT.text(printout, STATUS_BASE_POS.x + 10, STATUS_BASE_POS.y + (STATUS_LINE_HEIGHT * 4) );
