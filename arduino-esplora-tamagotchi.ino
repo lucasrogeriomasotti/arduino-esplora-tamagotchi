@@ -18,6 +18,12 @@ enum TemperaturePerception {
   hot
 };
 
+struct Status {
+  int hp;
+  int hunger;
+  int sleep;
+};
+
 int screenWidth;
 int screenHeight;
 
@@ -33,10 +39,21 @@ const Position LUMINOSITY_POS = {110, 5};
 
 const RGB BACKGROUND_COLOR = { 0, 0, 0 };
 
-const Position STATUS_BASE_POS = {100, 30};
+const Position STATUS_BASE_POS = {120, 30};
 const int STATUS_LINE_HEIGHT = 15;
 
 const int LUMINOSITY_DARK = 10;
+
+const int MAX_HP = 100;
+const int MAX_HUNGER = 100;
+const int MAX_SLEEP = 100;
+Status status = { MAX_HP, MAX_HUNGER, MAX_SLEEP};
+
+const int SLEEP_CYCLE = 5;
+const int HUNGER_CYCLE = 10;
+unsigned long cycles = 0;
+
+const int FOOD_HUNGER_BONUS = 10;
 
 void setup() {
   EsploraTFT.begin();
@@ -71,17 +88,41 @@ void loop() {
 
   if(isDark(luminosity)) {
     printSleepStatus(white);
+    status = sleep(status);
   } else {
     clearSleepStatus();
   }
 
   TemperaturePerception temperaturePerception = getTemperaturePerception(environmentTemperature, houseTemperature);
   printTemperaturePerception(temperaturePerception);
+  printStatus(status);
+
+  if(temperaturePerception != regular) {
+    status.hp -= 1;
+  }
+
+  if(cycles % SLEEP_CYCLE == 0) {
+    status.sleep -= 2;
+  }
+
+  if(cycles % HUNGER_CYCLE == 0) {
+    status.hunger -= 1;
+  }
+
+  if(status.hunger == MAX_HUNGER) {
+    status = heal(status);
+  }
+
+  int button = Esplora.readButton(SWITCH_RIGHT);
+  if(button == LOW) {
+      status = feed(status);
+  }
   
-  delay(1000);
+  delay(500);
   clearTemperature(environmentTemperature, ENVIRONMENT_TEMP_POS);
   clearTemperature(houseTemperature, AR_CONDITIONER_TEMP_POS);
   clearLight(luminosity, LUMINOSITY_POS);
+  cycles++;
 }
 
 void clearLight(int luminosity, Position pos) {
@@ -151,8 +192,57 @@ void printTemperaturePerception(TemperaturePerception temperature) {
   }
   temperatureText.toCharArray(printout, 4);
   EsploraTFT.fill(BACKGROUND_COLOR.r, BACKGROUND_COLOR.g, BACKGROUND_COLOR.b);
-  EsploraTFT.rect(STATUS_BASE_POS.x + 20, STATUS_BASE_POS.y + (STATUS_LINE_HEIGHT * 4), 20, 10);
+  EsploraTFT.rect(STATUS_BASE_POS.x + 10, STATUS_BASE_POS.y + (STATUS_LINE_HEIGHT * 4), 20, 10);
   EsploraTFT.stroke(255, 255, 255);
-  EsploraTFT.text(printout, STATUS_BASE_POS.x + 20, STATUS_BASE_POS.y + (STATUS_LINE_HEIGHT * 4) );
+  EsploraTFT.text(printout, STATUS_BASE_POS.x + 10, STATUS_BASE_POS.y + (STATUS_LINE_HEIGHT * 4) );
+}
+
+void printStatus(Status status) {
+  char hpPrintout[5];
+  String(status.hp).toCharArray(hpPrintout, 5);
+  char hungerPrintout[5];
+  String(status.hunger).toCharArray(hungerPrintout, 5);
+  char sleepPrintout[5];
+  String(status.sleep).toCharArray(sleepPrintout, 5);
+  
+  EsploraTFT.stroke(BACKGROUND_COLOR.r, BACKGROUND_COLOR.g, BACKGROUND_COLOR.b);
+  EsploraTFT.fill(BACKGROUND_COLOR.r, BACKGROUND_COLOR.g, BACKGROUND_COLOR.b);
+  EsploraTFT.rect(STATUS_BASE_POS.x + 20, STATUS_BASE_POS.y, 40, 40);
+  EsploraTFT.stroke(255, 255, 255);
+  EsploraTFT.text(hpPrintout, STATUS_BASE_POS.x + 20, STATUS_BASE_POS.y);
+  EsploraTFT.text(hungerPrintout, STATUS_BASE_POS.x + 20, STATUS_BASE_POS.y + STATUS_LINE_HEIGHT);
+  EsploraTFT.text(sleepPrintout, STATUS_BASE_POS.x + 20, STATUS_BASE_POS.y + (STATUS_LINE_HEIGHT * 2) );
+}
+
+Status sleep(Status s) {
+  if(s.sleep < MAX_SLEEP) {
+    s.sleep += 1;
+  }
+  return s;
+}
+
+Status feed(Status s) {
+  int newHunger = s.hunger + FOOD_HUNGER_BONUS;
+  if(newHunger > MAX_HUNGER) {
+    newHunger = 100;
+  }
+  status.hunger = newHunger;
+  printFoodMessage();
+  return status;
+}
+
+Status heal(Status s) {
+  if(s.hp < MAX_HP) {
+    s.hp += 1;
+  }
+  return s;
+}
+
+void printFoodMessage() {
+  EsploraTFT.stroke(255, 255, 255);
+  EsploraTFT.text("FOOD!", screenWidth/2 - 40, screenHeight/2 - 20);
+  delay(200);
+  EsploraTFT.stroke(BACKGROUND_COLOR.r, BACKGROUND_COLOR.g, BACKGROUND_COLOR.b);
+  EsploraTFT.text("FOOD!", screenWidth/2 - 40, screenHeight/2 - 20);
 }
 
