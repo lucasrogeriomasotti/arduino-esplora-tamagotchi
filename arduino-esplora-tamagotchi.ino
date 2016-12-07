@@ -56,8 +56,8 @@ const int SLEEP_CYCLE = 5 * 10;
 const int HUNGER_CYCLE = 10 * 10;
 unsigned long cycles = 0;
 
-const int FOOD_HUNGER_BONUS = 2;
-int circleSize = 10;
+const int FOOD_HUNGER_BONUS = 10;
+const int FOOD_CIRCLE_SIZE_BONUS = 2;
 
 const int NOISE_MAX = 100;
 const int NOISE_MIN = 0;
@@ -265,7 +265,7 @@ Status feed(Status s) {
     newHunger = 100;
   }
   status.hunger = newHunger;
-  status.circleSize += 10;
+  status.circleSize += FOOD_CIRCLE_SIZE_BONUS;
   printFoodMessage();
   return status;
 }
