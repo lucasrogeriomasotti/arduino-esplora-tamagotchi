@@ -44,7 +44,7 @@ const RGB BACKGROUND_COLOR = { 0, 0, 0 };
 const Position STATUS_BASE_POS = {120, 30};
 const int STATUS_LINE_HEIGHT = 15;
 
-const int LUMINOSITY_DARK = 10;
+const int LUMINOSITY_DARK = 20;
 
 const int MAX_HP = 100;
 const int MAX_HUNGER = 100;
@@ -52,8 +52,8 @@ const int MAX_SLEEP = 100;
 const int DEFAULT_SIZE = 4;
 Status status = { MAX_HP, MAX_HUNGER, MAX_SLEEP, DEFAULT_SIZE };
 
-const int SLEEP_CYCLE = 5 * 10;
-const int HUNGER_CYCLE = 10 * 10;
+const int SLEEP_CYCLE = 10;
+const int HUNGER_CYCLE = 5;
 unsigned long cycles = 0;
 
 const int FOOD_HUNGER_BONUS = 10;
@@ -126,11 +126,11 @@ void loop() {
   int noiseMapped = map(noise, 1023, 0, NOISE_MAX, NOISE_MIN);
   printValue(noiseMapped, NOISE_POS, white, "%");
 
-  if (noise > 0) {
+  if (noiseMapped > 30) {
     Esplora.tone(440, 10);
   }
 
-  if (isDark(luminosity) && noise == 0) {
+  if (isDark(luminosity) && noiseMapped < 30) {
     printSleepStatus(white);
     status = sleep(status);
   } else {
@@ -315,4 +315,3 @@ void printCircle(RGB color) {
   EsploraTFT.fill(color.r, color.g, color.b);
   EsploraTFT.circle(circlePosition.x, circlePosition.y, status.circleSize);
 }
-
