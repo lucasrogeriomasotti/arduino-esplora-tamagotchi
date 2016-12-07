@@ -67,6 +67,7 @@ const RGB white = { 255, 255, 255 };
 Position circlePosition;
 
 void setup() {
+  EsploraTFT.begin();
   EsploraTFT.background(BACKGROUND_COLOR.r, BACKGROUND_COLOR.g, BACKGROUND_COLOR.b);
   screenWidth = EsploraTFT.width();
   screenHeight = EsploraTFT.height();
