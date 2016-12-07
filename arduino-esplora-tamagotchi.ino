@@ -100,8 +100,9 @@ void loop() {
   printTemperaturePerception(temperaturePerception);
   printStatus(status);
 
-  if(temperaturePerception != regular) {
+  if(temperaturePerception != regular || status.hunger < 20 || status.sleep < 20) {
     status.hp -= 1;
+    Esplora.tone(523, 10); 
   }
 
   if(cycles % SLEEP_CYCLE == 0) {
