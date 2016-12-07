@@ -67,7 +67,6 @@ const RGB white = { 255, 255, 255 };
 Position circlePosition;
 
 void setup() {
-  EsploraTFT.begin();
   EsploraTFT.background(BACKGROUND_COLOR.r, BACKGROUND_COLOR.g, BACKGROUND_COLOR.b);
   screenWidth = EsploraTFT.width();
   screenHeight = EsploraTFT.height();
@@ -82,40 +81,32 @@ void setup() {
   EsploraTFT.text("SLE", STATUS_BASE_POS.x, STATUS_BASE_POS.y + (STATUS_LINE_HEIGHT * 2) );
   EsploraTFT.text("STA", STATUS_BASE_POS.x, STATUS_BASE_POS.y + (STATUS_LINE_HEIGHT * 3) );
 
-  EsploraTFT.rect(0,30, 115, (screenHeight - 35));
+  EsploraTFT.rect(0, 30, 115, (screenHeight - 35));
 
-  circlePosition.x = screenWidth/2 - 30;
-  circlePosition.y =  screenHeight/2;
+  circlePosition.x = screenWidth / 2 - 30;
+  circlePosition.y =  screenHeight / 2;
+}
 
-  Serial.begin(9600);
-} 
-
-void loop() {  
+void loop() {
   int x_axis = Esplora.readAccelerometer(X_AXIS);
   int y_axis = Esplora.readAccelerometer(Y_AXIS);
 
-   Serial.print("x: ");
- Serial.print(x_axis);
- Serial.print("\ty: ");
- Serial.print(y_axis);
- Serial.println();
-  
-  if(x_axis > 40) { //CIRCLE SHOULD MOVE TO THE LEFT OF THE SCREEN
+  if (x_axis > 40) { //CIRCLE SHOULD MOVE TO THE LEFT OF THE SCREEN
     eraseCircle();
     circlePosition.x = circlePosition.x - map(x_axis, 40, 140, 0, 15);
-  } else if(x_axis < 0) { //CIRCLE SHOULD MOVE TO THE RIGHT OF THE SCREEN
+  } else if (x_axis < 0) { //CIRCLE SHOULD MOVE TO THE RIGHT OF THE SCREEN
     eraseCircle();
     circlePosition.x = circlePosition.x + map(x_axis, 0, -100, 0, 15);
-  } else if(y_axis > 40) {
+  } else if (y_axis > 40) {
     eraseCircle();
     circlePosition.y = circlePosition.y + map(y_axis, 40, 140, 0, 15);
-  } else if(y_axis < 0) {
+  } else if (y_axis < 0) {
     eraseCircle();
     circlePosition.y = circlePosition.y - map(y_axis, 0, -100, 0, 15);
   }
 
   printCircle(white);
-  
+
   environmentTemperature = Esplora.readTemperature(DEGREES_C);
   printValue(environmentTemperature, ENVIRONMENT_TEMP_POS, white, "C");
 
@@ -129,11 +120,11 @@ void loop() {
   int noiseMapped = map(noise, 1023, 0, NOISE_MAX, NOISE_MIN);
   printValue(noiseMapped, NOISE_POS, white, "%");
 
-  if(noise > 0) {
+  if (noise > 0) {
     Esplora.tone(440, 10);
   }
 
-  if(isDark(luminosity) && noise == 0) {
+  if (isDark(luminosity) && noise == 0) {
     printSleepStatus(white);
     status = sleep(status);
   } else {
@@ -144,28 +135,28 @@ void loop() {
   printTemperaturePerception(temperaturePerception);
   printStatus(status);
 
-  if(temperaturePerception != regular || status.hunger < 20 || status.sleep < 20) {
+  if (temperaturePerception != regular || status.hunger < 20 || status.sleep < 20) {
     status.hp -= 1;
-    Esplora.tone(523, 10); 
+    Esplora.tone(523, 10);
   }
 
-  if(cycles % SLEEP_CYCLE == 0 && !isDark(luminosity)) {
+  if (cycles % SLEEP_CYCLE == 0 && !isDark(luminosity)) {
     status.sleep -= 2;
   }
 
-  if(cycles % HUNGER_CYCLE == 0) {
+  if (cycles % HUNGER_CYCLE == 0) {
     status.hunger -= 1;
   }
 
-  if(status.hunger == MAX_HUNGER) {
+  if (status.hunger == MAX_HUNGER) {
     status = heal(status);
   }
 
   int feedButton = Esplora.readButton(SWITCH_RIGHT);
-  if(feedButton == LOW) {
-      status = feed(status);
+  if (feedButton == LOW) {
+    status = feed(status);
   }
-  
+
   delay(50);
   clearValue(environmentTemperature, ENVIRONMENT_TEMP_POS, "C");
   clearValue(houseTemperature, AR_CONDITIONER_TEMP_POS, "C");
@@ -200,9 +191,9 @@ void clearSleepStatus() {
 
 TemperaturePerception getTemperaturePerception(int environmentTemperature, int houseTemperature) {
   int mediumTemperature = (environmentTemperature + houseTemperature) / 2;
-  if(mediumTemperature < 16) {
+  if (mediumTemperature < 16) {
     return cold;
-  } else if(mediumTemperature >= 16 && mediumTemperature < 26) {
+  } else if (mediumTemperature >= 16 && mediumTemperature < 26) {
     return regular;
   } else {
     return hot;
@@ -213,19 +204,19 @@ void printTemperaturePerception(TemperaturePerception temperature) {
   char printout[4];
   String temperatureText = String(temperature) + "C";
   RGB color;
-  switch(temperature) {
+  switch (temperature) {
     case cold:
       temperatureText = "COL";
       Esplora.writeRGB(0, 0, 100);
-    break;
+      break;
     case regular:
       temperatureText = "REG";
       Esplora.writeRGB(0, 100, 0);
-    break;
+      break;
     case hot:
       temperatureText = "HOT";
       Esplora.writeRGB(100, 0, 0);
-    break;
+      break;
   }
   temperatureText.toCharArray(printout, 4);
   EsploraTFT.fill(BACKGROUND_COLOR.r, BACKGROUND_COLOR.g, BACKGROUND_COLOR.b);
@@ -242,7 +233,7 @@ void printStatus(Status status) {
   String(status.hunger).toCharArray(hungerPrintout, 5);
   char sleepPrintout[5];
   String(status.sleep).toCharArray(sleepPrintout, 5);
-  
+
   EsploraTFT.stroke(BACKGROUND_COLOR.r, BACKGROUND_COLOR.g, BACKGROUND_COLOR.b);
   EsploraTFT.fill(BACKGROUND_COLOR.r, BACKGROUND_COLOR.g, BACKGROUND_COLOR.b);
   EsploraTFT.rect(STATUS_BASE_POS.x + 20, STATUS_BASE_POS.y, 40, 40);
@@ -253,7 +244,7 @@ void printStatus(Status status) {
 }
 
 Status sleep(Status s) {
-  if(s.sleep < MAX_SLEEP) {
+  if (s.sleep < MAX_SLEEP) {
     s.sleep += 1;
   }
   return s;
@@ -261,7 +252,7 @@ Status sleep(Status s) {
 
 Status feed(Status s) {
   int newHunger = s.hunger + FOOD_HUNGER_BONUS;
-  if(newHunger > MAX_HUNGER) {
+  if (newHunger > MAX_HUNGER) {
     newHunger = 100;
   }
   status.hunger = newHunger;
@@ -271,7 +262,7 @@ Status feed(Status s) {
 }
 
 Status heal(Status s) {
-  if(s.hp < MAX_HP) {
+  if (s.hp < MAX_HP) {
     s.hp += 1;
   }
   return s;
@@ -287,28 +278,28 @@ void printFoodMessage() {
 
 int collectNoise() {
   // Adapted From https://learn.adafruit.com/adafruit-microphone-amplifier-breakout/measuring-sound-levels
-  unsigned long startMillis= millis();  // Start of sample window
+  unsigned long startMillis = millis(); // Start of sample window
   unsigned int peakToPeak = 0;   // peak-to-peak level
   unsigned int signalMax = 0;
   unsigned int signalMin = 1024;
   unsigned int sample;
-   while (millis() - startMillis < 100)
-   {
-      sample = Esplora.readMicrophone();
-      if (sample < 1024)  // toss out spurious readings
+  while (millis() - startMillis < 100)
+  {
+    sample = Esplora.readMicrophone();
+    if (sample < 1024)  // toss out spurious readings
+    {
+      if (sample > signalMax)
       {
-         if (sample > signalMax)
-         {
-            signalMax = sample;  // save just the max levels
-         }
-         else if (sample < signalMin)
-         {
-            signalMin = sample;  // save just the min levels
-         }
+        signalMax = sample;  // save just the max levels
       }
-   }
-   peakToPeak = signalMax - signalMin;  // max - min = peak-peak amplitude
-   return peakToPeak;
+      else if (sample < signalMin)
+      {
+        signalMin = sample;  // save just the min levels
+      }
+    }
+  }
+  peakToPeak = signalMax - signalMin;  // max - min = peak-peak amplitude
+  return peakToPeak;
 }
 
 void eraseCircle() {
