@@ -37,6 +37,7 @@ const int AR_CONDITIONER_MIN_TEMP = 5;
 const int AR_CONDITIONER_MAX_TEMP = 30;
 
 const Position LUMINOSITY_POS = {110, 5};
+const Position NOISE_POS = {20, 15};
 
 const RGB BACKGROUND_COLOR = { 0, 0, 0 };
 
@@ -51,12 +52,15 @@ const int MAX_SLEEP = 100;
 const int DEFAULT_SIZE = 10;
 Status status = { MAX_HP, MAX_HUNGER, MAX_SLEEP, DEFAULT_SIZE };
 
-const int SLEEP_CYCLE = 5;
-const int HUNGER_CYCLE = 10;
+const int SLEEP_CYCLE = 5 * 10;
+const int HUNGER_CYCLE = 10 * 10;
 unsigned long cycles = 0;
 
 const int FOOD_HUNGER_BONUS = 10;
 int circleSize = 10;
+
+const int NOISE_MAX = 100;
+const int NOISE_MIN = 0;
 
 void setup() {
   EsploraTFT.begin();
@@ -68,6 +72,7 @@ void setup() {
   EsploraTFT.text("ENV ", (ENVIRONMENT_TEMP_POS.x - 20), ENVIRONMENT_TEMP_POS.y);
   EsploraTFT.text("ARC ", (AR_CONDITIONER_TEMP_POS.x - 20), AR_CONDITIONER_TEMP_POS.y);
   EsploraTFT.text("LUM ", (LUMINOSITY_POS.x - 20), LUMINOSITY_POS.y);
+  EsploraTFT.text("NOI ", (NOISE_POS.x - 20), NOISE_POS.y);
   EsploraTFT.text("HP", STATUS_BASE_POS.x, STATUS_BASE_POS.y);
   EsploraTFT.text("HUN", STATUS_BASE_POS.x, STATUS_BASE_POS.y + STATUS_LINE_HEIGHT);
   EsploraTFT.text("SLE", STATUS_BASE_POS.x, STATUS_BASE_POS.y + (STATUS_LINE_HEIGHT * 2) );
@@ -81,15 +86,18 @@ void loop() {
   RGB white = { 255, 255, 255 };
   
   environmentTemperature = Esplora.readTemperature(DEGREES_C);
-  printTemperature(environmentTemperature, ENVIRONMENT_TEMP_POS, white);
+  printValue(environmentTemperature, ENVIRONMENT_TEMP_POS, white, "C");
 
   houseTemperature =  map(Esplora.readSlider(), 1023, 0, AR_CONDITIONER_MIN_TEMP, AR_CONDITIONER_MAX_TEMP);
-  printTemperature(houseTemperature, AR_CONDITIONER_TEMP_POS, white);
+  printValue(houseTemperature, AR_CONDITIONER_TEMP_POS, white, "C");
 
   int luminosity = map(Esplora.readLightSensor(), 1023, 0, 100, 0);
-  printLuminosity(luminosity, LUMINOSITY_POS, white);
+  printValue(luminosity, LUMINOSITY_POS, white, "%");
 
-  if(isDark(luminosity)) {
+  int noise = map(collectNoise(), 1023, 0, NOISE_MAX, NOISE_MIN);
+  printValue(noise, NOISE_POS, white, "%");
+
+  if(isDark(luminosity) && noise == 0) {
     printSleepStatus(white);
     status = sleep(status);
   } else {
@@ -105,7 +113,7 @@ void loop() {
     Esplora.tone(523, 10); 
   }
 
-  if(cycles % SLEEP_CYCLE == 0) {
+  if(cycles % SLEEP_CYCLE == 0 && !isDark(luminosity)) {
     status.sleep -= 2;
   }
 
@@ -122,35 +130,24 @@ void loop() {
       status = feed(status);
   }
   
-  delay(500);
-  clearTemperature(environmentTemperature, ENVIRONMENT_TEMP_POS);
-  clearTemperature(houseTemperature, AR_CONDITIONER_TEMP_POS);
-  clearLight(luminosity, LUMINOSITY_POS);
+  delay(400);
+  clearValue(environmentTemperature, ENVIRONMENT_TEMP_POS, "C");
+  clearValue(houseTemperature, AR_CONDITIONER_TEMP_POS, "C");
+  clearValue(luminosity, LUMINOSITY_POS, "%");
+  clearValue(noise, NOISE_POS, "%");
   cycles++;
 }
 
-void clearLight(int luminosity, Position pos) {
-  printLuminosity(luminosity, pos, BACKGROUND_COLOR);
+void clearValue(int value, Position pos, String suffix) {
+  printValue(value, pos, BACKGROUND_COLOR, suffix);
 }
 
-void printLuminosity(int luminosity, Position pos, RGB color) {
-  String luminosityText = String(luminosity) + "%";
-  char printout[4];
-  luminosityText.toCharArray(printout, 4);
+void printValue(int value, Position pos, RGB color, String suffix) {
+  String text = String(value) + suffix;
+  char printout[5];
+  text.toCharArray(printout, 5);
   EsploraTFT.stroke(color.r, color.g, color.b);
   EsploraTFT.text(printout, pos.x, pos.y);
-}
-
-void printTemperature(int temperature, Position pos, RGB color) {
-  String temperatureText = String(temperature) + "C";
-  char printout[4];
-  temperatureText.toCharArray(printout, 4);
-  EsploraTFT.stroke(color.r, color.g, color.b);
-  EsploraTFT.text(printout, pos.x, pos.y);
-}
-
-void clearTemperature(int temperature, Position pos) {
-  printTemperature(temperature, pos, BACKGROUND_COLOR);
 }
 
 boolean isDark(int luminosity) {
@@ -250,5 +247,31 @@ void printFoodMessage() {
   delay(200);
   EsploraTFT.stroke(BACKGROUND_COLOR.r, BACKGROUND_COLOR.g, BACKGROUND_COLOR.b);
   EsploraTFT.text("FOOD!", screenWidth/2 - 40, screenHeight/2 - 20);
+}
+
+int collectNoise() {
+  // Adapted From https://learn.adafruit.com/adafruit-microphone-amplifier-breakout/measuring-sound-levels
+  unsigned long startMillis= millis();  // Start of sample window
+  unsigned int peakToPeak = 0;   // peak-to-peak level
+  unsigned int signalMax = 0;
+  unsigned int signalMin = 1024;
+  unsigned int sample;
+   while (millis() - startMillis < 100)
+   {
+      sample = Esplora.readMicrophone();
+      if (sample < 1024)  // toss out spurious readings
+      {
+         if (sample > signalMax)
+         {
+            signalMax = sample;  // save just the max levels
+         }
+         else if (sample < signalMin)
+         {
+            signalMin = sample;  // save just the min levels
+         }
+      }
+   }
+   peakToPeak = signalMax - signalMin;  // max - min = peak-peak amplitude
+   return peakToPeak;
 }
 
